@@ -5,49 +5,17 @@
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_listener.h>
 
-//just for conveneince, so I don't have to write it out a lot
 using namespace visualization_msgs;
 
-//when you release the mouse on a marker this gets called
-//eventually this will set the location of that marker as a nav goal for Carl
 void onClick(const InteractiveMarkerFeedbackConstPtr &f){
   if (f->event_type == InteractiveMarkerFeedback::MOUSE_UP){
-    ROS_INFO("marker clicked!");
-    float x = f->pose.position.x;
-    float y = f->pose.position.y;
-    ROS_INFO("at location %f,%f",x,y);
+    ROS_INFO_STREAM("marker clicked");
   }   
 }
 
 int main(int argc, char** argv){
 
-  ros::init(argc,argv,"create_parking_spots");
-  ros::NodeHandle node;
-  ros::Rate rate(10.0);
-
-  tf::TransformListener listener;
-
-  //read through all the transforms
-  while (node.ok()){
-
-    //create the transform that you're going to read in
-    tf::StampedTransform transform;
-
-    try{
-
-      listener.lookupTransform("/ilab","/kitchen_counter_link",ros::Time(0),transform);   
-      float x = transform.getOrigin().x();
-      float y = transform.getOrigin().y();
-      ROS_INFO("origin = (%f,%f)",x,y);
-
-    }
-    catch (tf::TransformException ex){
-      ROS_ERROR("%s",ex.what());
-      ros::Duration(1.0).sleep(); 
-    }
-    rate.sleep();
-  }
-
+  ros::init(argc,argv,"simple_marker");
   interactive_markers::InteractiveMarkerServer server("parking_markers");
   
   InteractiveMarker int_marker;
@@ -64,9 +32,9 @@ int main(int argc, char** argv){
   box.scale.x=1;
   box.scale.y=1;
   box.scale.z=0.01;
-  box.color.r=0;
-  box.color.g=0;
-  box.color.b=1;
+  box.color.r=.5;
+  box.color.g=.5;
+  box.color.b=.5;
   box.color.a=1;
  
   control.markers.push_back(box);
@@ -86,5 +54,5 @@ int main(int argc, char** argv){
   //add interactive marker at that point (InteractiveMarker)
   //make interactive marker clickable
   //print location on click
-  return 0;
+
 }

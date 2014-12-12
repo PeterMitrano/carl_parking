@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   visualization_msgs
   interactive_markers
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -105,13 +106,22 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(carl_parking_node src/create_parking_spots.cpp)
+add_executable(carl_read_parking_spots src/read_transforms.cpp)
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(carl_paring_node carl_paring_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(carl_parking_node
+target_link_libraries(
+	carl_parking_node
+   ${catkin_LIBRARIES}
+)
+
+
+target_link_libraries(
+	carl_read_parking_spots
    ${catkin_LIBRARIES}
 )
 
