@@ -1,17 +1,14 @@
-//adds interactive (clickable) markers to in the middle of all edges of all parts of the furniture
+//adds interactive (clickable) markers and set those locations as navigation goals
 
 #include <ros/ros.h>
 #include <interactive_markers/interactive_marker_server.h>
 #include <visualization_msgs/Marker.h>
-#include <tf/transform_listener.h>
-
-//just for conveneince, so I don't have to write it out a lot
-using namespace visualization_msgs;
+#include <urdf/model.h>
 
 //when you release the mouse on a marker this gets called
 //eventually this will set the location of that marker as a nav goal for Carl
-void onClick(const InteractiveMarkerFeedbackConstPtr &f){
-  if (f->event_type == InteractiveMarkerFeedback::MOUSE_UP){
+void onClick(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &f){
+  if (f->event_type == visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP){
     ROS_INFO("marker clicked!");
     float x = f->pose.position.x;
     float y = f->pose.position.y;
@@ -19,72 +16,74 @@ void onClick(const InteractiveMarkerFeedbackConstPtr &f){
   }   
 }
 
+//returns true only if the string ends in "nav_goal_link"
+bool isNavGoal(std::string link_name){
+  std::string search_param = "nav_goal_link";
+  return link_name.find(search_param,link_name.length()-search_param.length()) != std::string::npos;
+}
+
+//creates a clickable marker at the origin of the given frame id
+//this frame id is a string of the name of a link
+visualization_msgs::InteractiveMarker createParkingSpot(std::string frame_id){
+  visualization_msgs::InteractiveMarker int_marker;
+  int_marker.header.frame_id = frame_id;
+  int_marker.scale = 1;
+  int_marker.name = frame_id+"_parking_spot";
+  
+  visualization_msgs::InteractiveMarkerControl control;
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::BUTTON;
+  control.name = "button";
+  
+  visualization_msgs::Marker box;
+  box.type = visualization_msgs::Marker::CUBE;
+  box.scale.x=0.15;
+  box.scale.y=0.15;
+  box.scale.z=0.05;
+  box.color.r=0;
+  box.color.g=0.5;
+  box.color.b=0.25;
+  box.color.a=1;
+ 
+  control.markers.push_back(box);
+  control.always_visible = true;
+  int_marker.controls.push_back(control);
+
+  return int_marker;
+} 
+
 int main(int argc, char** argv){
 
   ros::init(argc,argv,"create_parking_spots");
   ros::NodeHandle node;
   ros::Rate rate(10.0);
 
-  tf::TransformListener listener;
+  interactive_markers::InteractiveMarkerServer server("parking_markers");
 
-  //read through all the transforms
-  while (node.ok()){
+  urdf::Model ilab;
 
-    //create the transform that you're going to read in
-    tf::StampedTransform transform;
-
-    try{
-
-      listener.lookupTransform("/ilab","/kitchen_counter_link",ros::Time(0),transform);   
-      float x = transform.getOrigin().x();
-      float y = transform.getOrigin().y();
-      ROS_INFO("origin = (%f,%f)",x,y);
-
-    }
-    catch (tf::TransformException ex){
-      ROS_ERROR("%s",ex.what());
-      ros::Duration(1.0).sleep(); 
-    }
-    rate.sleep();
+  //load the urdf with all the furniture off the param server
+  if (!ilab.initParam("/ilab_description")){
+    ROS_INFO("couldn't find /ilab_description on param server.");
+    return 1;
   }
 
-  interactive_markers::InteractiveMarkerServer server("parking_markers");
+  std::map<std::string, boost::shared_ptr<urdf::Link> > links = ilab.links_;
+  std::map<std::string, boost::shared_ptr<urdf::Link> >::iterator itr;
   
-  InteractiveMarker int_marker;
-  int_marker.header.frame_id = "ilab";
-  int_marker.scale = 1;
-  int_marker.name = "parking_spot";
-  
-  InteractiveMarkerControl control;
-  control.interaction_mode = InteractiveMarkerControl::BUTTON;
-  control.name = "button_control";
-  
-  Marker box;
-  box.type = Marker::CUBE;
-  box.scale.x=1;
-  box.scale.y=1;
-  box.scale.z=0.01;
-  box.color.r=0;
-  box.color.g=0;
-  box.color.b=1;
-  box.color.a=1;
- 
-  control.markers.push_back(box);
-  control.always_visible = true;
-  int_marker.controls.push_back(control);
-  
-  server.insert(int_marker, &onClick);
+  //go through all links and filter out the ones that end in "nav_goal_link"
+  for(itr = links.begin(); itr != links.end(); itr++) {
+    std::string link_name = itr->first;
+    if (isNavGoal(link_name)){
+      server.insert(createParkingSpot(link_name), &onClick);
+    }
+  }
 
+  ROS_INFO("creating clickable nav goals...");
+
+  //when these are called the markers will actually appear
   server.applyChanges();
-
   ros::spin();
 
-  //read in robot_pose_publisher (furniture are robot parts)
-  //calculate mid-points on edges of bounding box
-  //get transform of furniture (tfListener.lookupTransform)
-  //add edge-mid-point to transform
-  //add interactive marker at that point (InteractiveMarker)
-  //make interactive marker clickable
-  //print location on click
+
   return 0;
 }
