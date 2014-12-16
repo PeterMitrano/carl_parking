@@ -6,9 +6,15 @@ project(carl_parking)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  message_generation
   std_msgs
   visualization_msgs
+  actionlib_msgs
+  move_base_msgs
+  geometry_msgs
   interactive_markers
+  actionlib
+  move_base
   urdf
 )
 
@@ -96,6 +102,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -105,8 +112,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(carl_parking_node src/create_parking_spots.cpp)
-add_executable(carl_read_parking_spots src/read_transforms.cpp)
+add_executable(create_parking_spots src/create_parking_spots.cpp)
 
 
 ## Add cmake target dependencies of the executable/library
@@ -115,13 +121,7 @@ add_executable(carl_read_parking_spots src/read_transforms.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
-	carl_parking_node
-   ${catkin_LIBRARIES}
-)
-
-
-target_link_libraries(
-	carl_read_parking_spots
+	create_parking_spots
    ${catkin_LIBRARIES}
 )
 
