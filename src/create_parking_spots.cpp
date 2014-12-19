@@ -28,13 +28,17 @@ void onClick(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &f){
     
 
     //copy header and pose from marker to new action goal
-    geometry_msgs::Pose marker_pose = f->pose;
-    std_msgs::Header marker_header = f->header;
-    
+    //rotate 90 deg around z axis
+    geometry_msgs::Pose new_pose = f->pose;
+    new_pose.orientation.x=0;
+    new_pose.orientation.y=0;
+    new_pose.orientation.z=1;
+    new_pose.orientation.w=1;
+
     //create pose
     geometry_msgs::PoseStamped target_pose;
-    target_pose.header = marker_header;
-    target_pose.pose = marker_pose;
+    target_pose.header = f->header;
+    target_pose.pose = new_pose;
 
     //create goal
     move_base_msgs::MoveBaseGoal goal;
@@ -98,7 +102,7 @@ int main(int argc, char** argv){
   interactive_markers::InteractiveMarkerServer server("parking_markers");
 
   
-  client_ptr = new Client("/move_base/goal", true);
+  client_ptr = new Client("move_base", true);
 
   ROS_INFO("waiting for server...");
   
