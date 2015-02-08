@@ -1,18 +1,6 @@
 //adds interactive (clickable) markers and set those locations as navigation goals
-#include <ros/ros.h>
-#include <interactive_markers/interactive_marker_server.h>
-#include <visualization_msgs/Marker.h>
-#include <actionlib/client/simple_action_client.h>
-#include <actionlib/client/terminal_state.h>
-#include <move_base_msgs/MoveBaseActionGoal.h>
-#include <move_base_msgs/MoveBaseGoal.h>
-#include <move_base_msgs/MoveBaseAction.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Quaternion.h>
-#include <std_msgs/Header.h>
-#include <urdf/model.h>
+
+#include "create_parking_spots.h"
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* Client_ptr;
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> Client;
@@ -24,9 +12,6 @@ Client_ptr client_ptr;
 void onClick(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &f){
   if (f->event_type == visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP){
     
-    ROS_INFO("marker clicked!");
-    
-
     //copy header and pose from marker to new action goal
     //rotate 90 deg around z axis
     geometry_msgs::Pose new_pose = f->pose;
@@ -47,13 +32,13 @@ void onClick(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &f){
     //send action goal
     client_ptr->sendGoal(goal);
 
-    bool finished_before_timeout = client_ptr->waitForResult(ros::Duration(10.0));
+    bool finished_before_timeout = client_ptr->waitForResult(ros::Duration(20.0));
 
     if (finished_before_timeout){
       ROS_INFO("finished successfully!");
     }
     else {
-      ROS_INFO("timed out! That's dissappointing... :( #TheStuggleIsReal");
+      ROS_INFO("timed out! Goal not reached in time.");
     }
   }   
 }

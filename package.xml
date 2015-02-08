@@ -5,7 +5,7 @@
   <description>Package that loads the urdf and put clickable markers (parking spots)for CARL to navigate to</description>
 
   <maintainer email="pdmitrano@wpi.edu">pdmitrano</maintainer>
-  <license>BSD</license>
+  <license>WTFPL</license>
 
 
   <!-- The *_depend tags are used to specify dependencies -->
